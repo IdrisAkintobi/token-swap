@@ -1,5 +1,13 @@
 {
-  "name": "hardhat-project",
+  "name": "token-swap-project",
+  "scripts": {
+    "build": "npx hardhat compile",
+    "test": "npm run build && npx hardhat test",
+    "start:node": "npx hardhat node",
+    "interact": "npx hardhat run scripts/interact.ts --network localhost",
+    "deploy": "npm run test && npx hardhat ignition deploy ./ignition/modules/TokenSwap.ts --network lisk-sepolia --verify",
+    "deploy:local": "npm run test && npx hardhat ignition deploy ./ignition/modules/TokenSwap.ts --network localhost"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.22.10"
