@@ -6,7 +6,6 @@ This is a simple token swap project built using Solidity and Hardhat. The projec
 
 - Users can create swap orders offering one token in exchange for another.
 - Only the contract owner can approve or decline orders.
-- Low-level calls are used for token transfers, and reentrancy is prevented by updating balances before transfers.
 - Token transfers are made with a specified gas limit.
 
 ## Prerequisites
