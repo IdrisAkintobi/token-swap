@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
-contract TokenSwap is Ownable, ReentrancyGuard {
+contract TokenSwap {
+    address private owner;
     struct Order {
         uint256 id;
         address creator;
@@ -21,7 +20,9 @@ contract TokenSwap is Ownable, ReentrancyGuard {
     uint256 public orderCount;
     mapping(uint256 => Order) public orders;
 
-    constructor() Ownable(msg.sender) {}
+    constructor() {
+        owner = msg.sender;
+    }
 
     // Custom Errors
     error OfferAmountMustBeGreaterThanZero();
@@ -37,8 +38,10 @@ contract TokenSwap is Ownable, ReentrancyGuard {
     error OrderAlreadyFulfilled(uint256 orderId);
     error OrderCanceledError(uint256 orderId);
     error OnlyCreatorCanCancel(address caller);
-    error OnlyOwnerCanApproveOrDecline(address caller);
+    error OnlyOwnerCanPerformThisAction();
     error TransferFailed(address token);
+    error AddressZeroDetected();
+    error CanNotSwapSameToken();
 
     // Events
     event OrderCreated(
@@ -61,6 +64,12 @@ contract TokenSwap is Ownable, ReentrancyGuard {
     event OrderApproved(uint256 indexed id, address indexed owner);
     event OrderDeclined(uint256 indexed id, address indexed owner);
 
+    // Modifiers
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert OnlyOwnerCanPerformThisAction();
+        _;
+    }
+
     modifier onlyApproved(uint256 orderId) {
         if (!orders[orderId].approved) revert OrderNotApproved(orderId);
         _;
@@ -71,7 +80,10 @@ contract TokenSwap is Ownable, ReentrancyGuard {
         uint256 offerAmount,
         address wantToken,
         uint256 wantAmount
-    ) external nonReentrant {
+    ) external {
+        if (offerToken == address(0) || wantToken == address(0))
+            revert AddressZeroDetected();
+        if (offerToken == wantToken) revert CanNotSwapSameToken();
         if (offerAmount == 0) revert OfferAmountMustBeGreaterThanZero();
         if (wantAmount == 0) revert WantAmountMustBeGreaterThanZero();
         if (
@@ -138,7 +150,7 @@ contract TokenSwap is Ownable, ReentrancyGuard {
     function fulfillOrder(
         uint256 orderId,
         uint256 gasAmount
-    ) external nonReentrant onlyApproved(orderId) {
+    ) external onlyApproved(orderId) {
         Order storage order = orders[orderId];
         if (order.id != orderId) revert OrderDoesNotExist(orderId);
         if (order.fulfilled) revert OrderAlreadyFulfilled(orderId);
@@ -195,12 +207,14 @@ contract TokenSwap is Ownable, ReentrancyGuard {
         );
     }
 
-    function cancelOrder(uint256 orderId) external nonReentrant {
+    function cancelOrder(uint256 orderId) external {
         Order storage order = orders[orderId];
         if (order.creator != msg.sender)
             revert OnlyCreatorCanCancel(msg.sender);
         if (order.fulfilled) revert OrderAlreadyFulfilled(orderId);
         if (order.canceled) revert OrderCanceledError(orderId);
+
+        order.canceled = true;
 
         // Return the offer tokens to the creator
         (bool returned, ) = order.offerToken.call(
@@ -212,7 +226,6 @@ contract TokenSwap is Ownable, ReentrancyGuard {
         );
         if (!returned) revert TransferFailed(order.offerToken);
 
-        order.canceled = true;
         emit OrderCanceled(orderId, msg.sender);
     }
 
