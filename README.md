@@ -22,7 +22,7 @@ To use the project, make sure you have the following installed:
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/your-repo/token-swap-project.git
+   git clone https://github.com/IdrisAkintobi/token-swap.git
    cd token-swap-project
    ```
 
