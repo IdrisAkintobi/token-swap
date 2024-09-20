@@ -45,7 +45,7 @@ async function main() {
         .approve(tokenSwap, ethers.parseUnits("20", 18));
 
     // Fulfill the order: addr2 fulfills it by providing 20 W3B
-    await tokenSwap.connect(addr2).fulfillOrder(1, 50000); // Specify gas limit
+    await tokenSwap.connect(addr2).fulfillOrder(1);
     console.log("Order fulfilled by addr2: 20 W3B for 100 GUZ");
 }
 

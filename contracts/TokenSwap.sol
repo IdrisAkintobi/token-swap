@@ -108,10 +108,7 @@ contract TokenSwap is CustomErrorAndEvents {
         emit OrderDeclined(orderId, msg.sender);
     }
 
-    function fulfillOrder(
-        uint256 orderId,
-        uint256 gasAmount
-    ) external onlyApproved(orderId) {
+    function fulfillOrder(uint256 orderId) external onlyApproved(orderId) {
         Order storage order = orders[orderId];
         if (order.id != orderId) revert OrderDoesNotExist(orderId);
         if (order.fulfilled) revert OrderAlreadyFulfilled(orderId);
@@ -138,7 +135,7 @@ contract TokenSwap is CustomErrorAndEvents {
         order.fulfilled = true;
 
         // 2. Transfer the desired tokens from the fulfiller to the creator
-        (bool received, ) = order.wantToken.call{gas: gasAmount}(
+        (bool received, ) = order.wantToken.call(
             abi.encodeWithSignature(
                 "transferFrom(address,address,uint256)",
                 msg.sender,
@@ -149,7 +146,7 @@ contract TokenSwap is CustomErrorAndEvents {
         if (!received) revert TransferFailed(order.wantToken);
 
         // 3. Transfer the offer tokens from the contract to the fulfiller
-        (bool sent, ) = order.offerToken.call{gas: gasAmount}(
+        (bool sent, ) = order.offerToken.call(
             abi.encodeWithSignature(
                 "transfer(address,uint256)",
                 msg.sender,
